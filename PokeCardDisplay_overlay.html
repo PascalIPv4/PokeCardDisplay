@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokemon Wanted — Card Display & Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --yellow: #F5C800; --navy: #1E1A52; }
+
+body {
+  background: transparent;
+  color: #fff;
+  font-family: "Rajdhani", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* --- ZONE DISPLAY (CARTE UNIQUE OBS) --- */
+#display-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 10px;
+}
+
+.card-wrapper {
+  position: relative;
+  width: min(80vw, 320px);
+  aspect-ratio: 63/88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.slider-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.card-slide-item {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.single-card {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+}
+
+/* TAMPON "OBTENUE" SUR LE CARROUSEL */
+.card-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  background: rgba(34, 197, 94, 0.9);
+  color: #fff;
+  font-family: "Bangers", cursive;
+  font-size: 28px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 3px dashed #fff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  letter-spacing: 2px;
+  pointer-events: none;
+  display: none;
+  z-index: 10;
+}
+
+.card-slide-item.is-obtained .card-stamp {
+  display: block;
+}
+
+.empty-state {
+  width: min(80vw, 320px);
+  aspect-ratio: 63/88;
+  border: 2px dashed rgba(245, 200, 0, 0.4);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* BOUTON DISCRET SOUS LA CARTE */
+.btn-toggle-panel {
+  margin-top: 12px;
+  background: rgba(15, 13, 38, 0.6);
+  border: 1px solid rgba(245, 200, 0, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.btn-toggle-panel:hover {
+  background: var(--yellow);
+  color: var(--navy);
+  border-color: var(--yellow);
+  opacity: 1;
+}
+
+/* --- PANNEAU DE CONTRÔLE (DRAWER RESPONSIVE) --- */
+#control-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 85vh;
+  background: #0f0d26;
+  border-top: 3px solid var(--yellow);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+#control-drawer.open {
+  transform: translateY(0);
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--yellow);
+  padding: 10px 16px;
+}
+
+.drawer-header h2 {
+  font-family: "Bangers", cursive;
+  color: var(--navy);
+  font-size: 18px;
+}
+
+.btn-close-drawer {
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.drawer-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .drawer-body {
+    flex-direction: column;
+  }
+  #col-series {
+    width: 100% !important;
+    height: 40%;
+    border-right: none !important;
+    border-bottom: 2px solid rgba(245,200,0,0.2);
+  }
+}
+
+#col-series {
+  width: 240px;
+  border-right: 2px solid rgba(245,200,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.col-head { padding: 8px 12px; border-bottom: 1px solid rgba(245,200,0,0.15); }
+.col-head h3 { font-family: "Bangers", cursive; color: var(--yellow); font-size: 14px; margin-bottom: 4px; }
+.col-head input, .cards-search-wrap input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(245,200,0,0.3);
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 10px;
+  outline: none;
+  font-size: 12px;
+}
+
+#series-list { flex: 1; overflow-y: auto; }
+.series-group-label { font-family: "Bangers", cursive; font-size: 10px; color: rgba(245,200,0,0.5); padding: 6px 10px 2px; }
+.series-item { padding: 6px 10px; cursor: pointer; border-left: 3px solid transparent; font-size: 12px; font-weight: 700; }
+.series-item:hover { background: rgba(245,200,0,0.06); }
+.series-item.active { background: rgba(245,200,0,0.12); border-left-color: var(--yellow); }
+
+#col-cards { flex: 1; display: flex; flex-direction: column; }
+.cards-col-head { padding: 8px 12px; border-bottom: 1px solid rgba(245,200,0,0.15); }
+.cards-col-head h3 { font-family: "Bangers", cursive; color: var(--yellow); font-size: 16px; }
+.cards-search-wrap { padding: 6px 12px; border-bottom: 1px solid rgba(245,200,0,0.1); }
+#cards-grid-wrap { flex: 1; overflow-y: auto; padding: 10px; }
+#cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+
+.gc { cursor: pointer; border-radius: 6px; position: relative; }
+.gc-inner { border-radius: 6px; overflow: hidden; border: 2px solid transparent; aspect-ratio: 63/88; background: #1a1642; position: relative; }
+.gc.selected .gc-inner { border-color: var(--yellow); box-shadow: 0 0 8px rgba(245,200,0,0.6); }
+
+.gc-inner img { width: 100%; height: 100%; object-fit: cover; }
+
+.gc-stamp {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gc.obtained .gc-stamp {
+  opacity: 1;
+}
+.gc-stamp span {
+  background: #22c55e;
+  color: #fff;
+  font-family: "Bangers", cursive;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transform: rotate(-10deg);
+  border: 1px solid #fff;
+}
+
+.gc-check { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--yellow); border: 2px solid var(--navy); border-radius: 50%; font-size: 10px; display: none; align-items: center; justify-content: center; color: var(--navy); font-weight: 900; z-index: 5; }
+.gc.selected .gc-check { display: flex; }
+.gc-actions { display: flex; gap: 2px; margin-top: 2px; }
+.btn-card-action { flex: 1; font-size: 8px; padding: 2px 0; border: none; border-radius: 3px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.1); color: #fff; }
+.btn-card-action.obtained-btn { background: #22c55e; color: #000; }
+.gc-name { font-size: 9px; font-weight: 700; text-align: center; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.drawer-footer { padding: 8px 16px; border-top: 1px solid rgba(245,200,0,0.15); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); }
+.btn-clear { background: none; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 4px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.btn-clear:hover { background: #e53e3e; color: #fff; }
+.grid-state { grid-column: 1/-1; text-align: center; padding: 20px; color: rgba(255,255,255,0.4); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- AFFICHAGE D'UNE SEULE CARTE (OBS) -->
+<div id="display-container">
+  <div class="card-wrapper" id="card-slot">
+    <div class="empty-state" id="empty-state-msg">Aucune carte sélectionnée</div>
+  </div>
+  <button class="btn-toggle-panel" id="btn-open-panel">⚙ Panneau de sélection</button>
+</div>
+
+<!-- TIROIR DE SÉLECTION (PANNEAU DE CONTRÔLE) -->
+<div id="control-drawer">
+  <div class="drawer-header">
+    <h2>SÉLECTION DES CARTES (<span id="hd-count">0</span>)</h2>
+    <button class="btn-close-drawer" id="btn-close-panel">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <div id="col-series">
+      <div class="col-head">
+        <h3>EXTENSIONS</h3>
+        <input type="text" id="series-search" placeholder="Rechercher…" autocomplete="off"/>
+      </div>
+      <div id="series-list"><div class="grid-state">Chargement…</div></div>
+    </div>
+
+    <div id="col-cards">
+      <div class="cards-col-head">
+        <h3 id="set-title">Sélectionnez une extension</h3>
+      </div>
+      <div class="cards-search-wrap" id="card-search-wrap" style="display:none">
+        <input type="text" id="card-search" placeholder="Filtrer les cartes…" autocomplete="off"/>
+      </div>
+      <div id="cards-grid-wrap">
+        <div id="cards-grid"><div class="grid-state">← Choisissez une extension à gauche</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn-clear" id="btn-clear">Tout effacer</button>
+  </div>
+</div>
+
+<script>
+// URL de base pointant directement sur ton dépôt GitHub Pages
+const IMAGE_BASE_PATH = 'https://pascalipv4.github.io/PokeCardDisplay/images/';
+
+let wantedCards = JSON.parse(localStorage.getItem("ptcg-v6") || "[]");
+let obtainedCards = new Set(localStorage.getItem("ptcg-obtained") ? JSON.parse(localStorage.getItem("ptcg-obtained")) : []);
+let wantedIds = new Set(wantedCards.map(c => c.id));
+
+let allSets = [], currentCards = [], activeSetId = null;
+let currentIndex = 0;
+let carouselInterval = null;
+
+// Génération automatique des 32 images (1.png à 32.png)
+const LOCAL_CUSTOM_32 = Array.from({ length: 32 }, (_, i) => {
+  const num = i + 1;
+  return {
+    id: `local-custom-${num}`,
+    number: `${num}/32`,
+    name: `Carte #${num}`,
+    img: `${IMAGE_BASE_PATH}${num}.png`
+  };
+});
+
+const LOCAL_CLASSIC_54 = Array.from({ length: 54 }, (_, i) => {
+  const num = i + 1;
+  let filename = (num <= 30) ? `2M6P Classic_FR_${num}.png` : `2M6P_FR_${num}.png`;
+  return {
+    id: `2m6p-fr-${num}`,
+    number: `${num}/54`,
+    name: `Carte #${num}`,
+    img: IMAGE_BASE_PATH + filename,
+    fallback: `https://images.pokemontcg.io/base1/4.png`
+  };
+});
+
+const EXTRA_SETS = [
+  { id: "local_custom_32", name: "Mes Images GitHub (32 Cartes)", series: "Dossier Images", isManual: true, cardsData: LOCAL_CUSTOM_32 },
+  { id: "2m6p_classic_fr", name: "Classic Collection (54 Cartes FR)", series: "30ᵉ Anniversaire", isManual: true, cardsData: LOCAL_CLASSIC_54 }
+];
+
+function initDisplayElements() {
+  const slot = document.getElementById("card-slot");
+  const existingTrack = slot.querySelector(".slider-track");
+  if (existingTrack) existingTrack.remove();
+
+  if (wantedCards.length === 0) {
+    document.getElementById("empty-state-msg").style.display = "flex";
+    if (carouselInterval) { clearInterval(carouselInterval); carouselInterval = null; }
+    return;
+  }
+  document.getElementById("empty-state-msg").style.display = "none";
+
+  const track = document.createElement("div");
+  track.className = "slider-track";
+  track.id = "slider-track";
+
+  wantedCards.forEach((card) => {
+    let slideItem = document.createElement("div");
+    slideItem.className = `card-slide-item ${obtainedCards.has(card.id) ? 'is-obtained' : ''}`;
+    slideItem.dataset.id = card.id;
+
+    let img = document.createElement("img");
+    img.src = card.img;
+    img.className = "single-card";
+    img.onerror = function() {
+      console.warn("Image introuvable :", card.img);
+      this.style.border = "2px dashed red";
+    };
+
+    let stamp = document.createElement("div");
+    stamp.className = "card-stamp";
+    stamp.textContent = "OBTENUE";
+
+    slideItem.appendChild(img);
+    slideItem.appendChild(stamp);
+    track.appendChild(slideItem);
+  });
+
+  slot.appendChild(track);
+  updateSlidePosition();
+  startCarousel();
+}
+
+function updateSlidePosition() {
+  const track = document.getElementById("slider-track");
+  if (!track) return;
+  
+  const slideItems = track.querySelectorAll(".card-slide-item");
+  slideItems.forEach((item, idx) => {
+    if (obtainedCards.has(wantedCards[idx].id)) {
+      item.classList.add("is-obtained");
+    } else {
+      item.classList.remove("is-obtained");
+    }
+  });
+
+  track.style.transform = `translateX(-${currentIndex * 100}%)`;
+}
+
+function startCarousel() {
+  if (carouselInterval) clearInterval(carouselInterval);
+  
+  if (wantedCards.length > 1) {
+    carouselInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % wantedCards.length;
+      updateSlidePosition();
+    }, 6000);
+  }
+}
+
+function renderSingleCard() {
+  const countEl = document.getElementById("hd-count");
+  countEl.textContent = wantedCards.length;
+  if (currentIndex >= wantedCards.length) currentIndex = 0;
+  initDisplayElements();
+}
+
+function save() {
+  localStorage.setItem("ptcg-v6", JSON.stringify(wantedCards));
+  localStorage.setItem("ptcg-obtained", JSON.stringify([...obtainedCards]));
+  renderSingleCard();
+}
+
+function toggleCard(card) {
+  if (wantedIds.has(card.id)) {
+    wantedIds.delete(card.id);
+    wantedCards = wantedCards.filter(c => c.id !== card.id);
+    if (currentIndex >= wantedCards.length) currentIndex = 0;
+  } else {
+    wantedIds.add(card.id);
+    wantedCards.push(card);
+  }
+  save();
+  renderCardsGrid(currentCards);
+}
+
+function toggleObtained(id, e) {
+  e.stopPropagation();
+  if (obtainedCards.has(id)) {
+    obtainedCards.delete(id);
+  } else {
+    obtainedCards.add(id);
+  }
+  save();
+  renderCardsGrid(currentCards);
+}
+
+const drawer = document.getElementById("control-drawer");
+document.getElementById("btn-open-panel").addEventListener("click", () => drawer.classList.add("open"));
+document.getElementById("btn-close-panel").addEventListener("click", () => drawer.classList.remove("open"));
+
+async function loadSets() {
+  document.getElementById("series-list").innerHTML = '<div class="grid-state">Chargement…</div>';
+  try {
+    const res = await fetch("https://api.tcgdex.net/v2/fr/sets");
+    const data = await res.json();
+    
+    const apiSets = (data || []).reverse().map(s => ({
+      id: s.id,
+      name: s.name || s.id,
+      series: s.serie?.name || "Autres",
+      isManual: false
+    }));
+
+    allSets = [...EXTRA_SETS, ...apiSets];
+    renderSeriesList(allSets);
+  } catch (err) {
+    allSets = [...EXTRA_SETS];
+    renderSeriesList(allSets);
+  }
+}
+
+function renderSeriesList(sets) {
+  const list = document.getElementById("series-list");
+  list.innerHTML = "";
+  
+  const groups = {};
+  sets.forEach(s => {
+    const seriesName = s.series || "Autres";
+    if (!groups[seriesName]) groups[seriesName] = [];
+    groups[seriesName].push(s);
+  });
+
+  Object.entries(groups).forEach(([groupName, items]) => {
+    const lbl = document.createElement("div");
+    lbl.className = "series-group-label";
+    lbl.textContent = groupName;
+    list.appendChild(lbl);
+
+    items.forEach(s => {
+      const item = document.createElement("div");
+      item.className = "series-item" + (s.id === activeSetId ? " active" : "");
+      item.dataset.id = s.id;
+      item.textContent = s.name;
+      item.addEventListener("click", () => loadSetCards(s));
+      list.appendChild(item);
+    });
+  });
+}
+
+async function loadSetCards(set) {
+  activeSetId = set.id;
+  document.querySelectorAll(".series-item").forEach(el => el.classList.toggle("active", el.dataset.id === set.id));
+  document.getElementById("set-title").textContent = set.name;
+  document.getElementById("card-search-wrap").style.display = "block";
+  document.getElementById("cards-grid").innerHTML = '<div class="grid-state">Chargement…</div>';
+
+  if (set.isManual) {
+    currentCards = set.cardsData.map(c => ({
+      id: c.id,
+      number: c.number,
+      name: c.name,
+      imgSmall: c.img,
+      imgLarge: c.img,
+      imgFallback: c.img
+    }));
+    renderCardsGrid(currentCards);
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://api.tcgdex.net/v2/fr/sets/${set.id}`);
+    const data = await res.json();
+
+    currentCards = (data.cards || []).map(c => {
+      const num = String(c.localId || c.id);
+      const tcgdexImg = c.image ? `${c.image}/high.webp` : null;
+      const fallbackImg = `https://images.pokemontcg.io/${set.id}/${num}_hires.png`;
+
+      return {
+        id: `fr-${set.id}-${num}`,
+        number: num,
+        name: c.name || `#${num}`,
+        imgSmall: tcgdexImg || fallbackImg,
+        imgLarge: tcgdexImg || fallbackImg,
+        imgFallback: fallbackImg
+      };
+    });
+
+    renderCardsGrid(currentCards);
+  } catch (err) {
+    document.getElementById("cards-grid").innerHTML = '<div class="grid-state">Erreur de chargement.</div>';
+  }
+}
+
+function renderCardsGrid(cards) {
+  const grid = document.getElementById("cards-grid");
+  grid.innerHTML = "";
+
+  if (!cards || cards.length === 0) {
+    grid.innerHTML = '<div class="grid-state">Aucune carte.</div>';
+    return;
+  }
+
+  cards.forEach(c => {
+    const isSel = wantedIds.has(c.id);
+    const isObt = obtainedCards.has(c.id);
+
+    const gc = document.createElement("div");
+    gc.className = `gc ${isSel ? "selected" : ""} ${isObt ? "obtained" : ""}`;
+    gc.dataset.id = c.id;
+    gc.innerHTML = `
+      <div class="gc-inner">
+        <img src="${c.imgSmall}" loading="lazy" alt="${c.name}" 
+             onerror="this.style.opacity='0.2'; console.warn('Erreur image grille:', '${c.imgSmall}');" />
+        <div class="gc-stamp"><span>OBTENUE</span></div>
+      </div>
+      <div class="gc-check">✓</div>
+      <div class="gc-name">#${c.number} ${c.name}</div>
+      <div class="gc-actions">
+        <button class="btn-card-action ${isObt ? "obtained-btn" : ""}" onclick="toggleObtained('${c.id}', event)">
+          ${isObt ? "✔ Obtenue" : "Obtenue"}
+        </button>
+      </div>
+    `;
+    gc.addEventListener("click", () => {
+      toggleCard({ id: c.id, name: c.name, img: c.imgLarge });
+    });
+    grid.appendChild(gc);
+  });
+}
+
+document.getElementById("card-search").addEventListener("input", (e) => {
+  const query = e.target.value.toLowerCase().trim();
+  renderCardsGrid(currentCards.filter(c => c.name.toLowerCase().includes(query) || String(c.number).includes(query)));
+});
+
+document.getElementById("series-search").addEventListener("input", (e) => {
+  const query = e.target.value.toLowerCase().trim();
+  renderSeriesList(allSets.filter(s => s.name.toLowerCase().includes(query) || s.series.toLowerCase().includes(query)));
+});
+
+document.getElementById("btn-clear").addEventListener("click", () => {
+  wantedCards = []; wantedIds.clear(); obtainedCards.clear(); currentIndex = 0; save();
+  renderCardsGrid(currentCards);
+});
+
+loadSets();
+renderSingleCard();
+</script>
+</body>
+</html>
