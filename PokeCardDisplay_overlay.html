@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>OBS Widget Pokemon</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: transparent; overflow: hidden; display: flex; justify-content: flex-start; align-items: flex-start; }
+#overlay { width: 350px; filter: none; }
+.ov-slider { position: relative; width: 100%; aspect-ratio: 63 / 88; border-radius: 12px; overflow: hidden; box-shadow: none; }
+.ov-slide { position: absolute; inset: 0; will-change: transform, opacity; transition: transform 0.5s cubic-bezier(0.77,0,0.175,1), opacity 0.5s ease; }
+.ov-slide.prev   { transform: translateX(110%);  opacity: 0; }
+.ov-slide.active { transform: translateX(0);     opacity: 1; }
+.ov-slide.next   { transform: translateX(-110%); opacity: 0; }
+.ov-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Effet brillant holographique */
+.ov-slide::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 20%, rgba(255,220,0,0.08) 30%, rgba(168,85,247,0.07) 42%, rgba(56,189,248,0.08) 54%, transparent 74%);
+  background-size: 200% 200%;
+  animation: holo 3.5s linear infinite;
+  pointer-events: none;
+}
+@keyframes holo { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+/* Style du Tampon "Obtenu" */
+.stamp-obtained {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg) scale(1);
+  border: 6px solid #e53e3e;
+  color: #e53e3e;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  font-size: 38px;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 10px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 0px #000;
+  letter-spacing: 3px;
+  z-index: 10;
+  pointer-events: none;
+  animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Animation d'impact au déclenchement du tampon */
+@keyframes stamp-pop {
+  0% { transform: translate(-50%, -50%) rotate(-12deg) scale(2); opacity: 0; }
+  100% { transform: translate(-50%, -50%) rotate(-12deg) scale(1); opacity: 1; }
+}
+
+/* Optionnel : assombrir légèrement la carte obtenue pour faire ressortir le tampon */
+.ov-slide.is-obtained img {
+  filter: brightness(0.7);
+}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div id="ov-slider" class="ov-slider"></div>
+</div>
+
+<script>
+const SLIDE_MS = 8000;
+const bc = new BroadcastChannel("pokemon_obs_channel");
+
+let wantedCards = JSON.parse(localStorage.getItem("ptcg-v6") || "[]");
+let obtainedCards = new Set(JSON.parse(localStorage.getItem("ptcg-obtained") || "[]"));
+let slideIdx = 0;
+let slideTimer = null;
+
+const ovSlider = document.getElementById("ov-slider");
+
+function renderOverlay() {
+  const n = wantedCards.length;
+  slideIdx = Math.min(slideIdx, Math.max(0, n - 1));
+  stopAutoSlide();
+
+  ovSlider.innerHTML = "";
+  if (n === 0) return;
+
+  wantedCards.forEach((card, i) => {
+    const isObtained = obtainedCards.has(card.id);
+    const slide = document.createElement("div");
+    slide.className = "ov-slide " + (i < slideIdx ? "prev" : i > idxClass(i)) + (isObtained ? " is-obtained" : "");
+
+    const img = document.createElement("img");
+    img.src = card.img;
+    slide.appendChild(img);
+
+    // Ajout du tampon si la carte est marquée comme obtenue
+    if (isObtained) {
+      const stamp = document.createElement("div");
+      stamp.className = "stamp-obtained";
+      stamp.textContent = "OBTENU";
+      slide.appendChild(stamp);
+    }
+
+    ovSlider.appendChild(slide);
+  });
+
+  // Re-synchronise l'index de la classe CSS active
+  updateSlideClasses();
+
+  if (n > 1) startAutoSlide();
+}
+
+function idxClass(i) {
+  return i === slideIdx ? "active" : (i > slideIdx ? "next" : "prev");
+}
+
+function updateSlideClasses() {
+  ovSlider.querySelectorAll(".ov-slide").forEach((s, i) => {
+    const isObtained = obtainedCards.has(wantedCards[i]?.id);
+    s.className = "ov-slide " + (i < slideIdx ? "prev" : i > slideIdx ? "next" : "active") + (isObtained ? " is-obtained" : "");
+  });
+}
+
+function goToSlide(idx) {
+  if (idx === slideIdx || !wantedCards.length) return;
+  slideIdx = idx;
+  updateSlideClasses();
+}
+
+function startAutoSlide() {
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(() => {
+    goToSlide((slideIdx + 1) % wantedCards.length);
+    startAutoSlide();
+  }, SLIDE_MS);
+}
+
+function stopAutoSlide() { clearTimeout(slideTimer); }
+
+// Réception des mises à jour du panneau de contrôle en temps réel
+bc.onmessage = (event) => {
+  // Recharge les cartes recherchées et le statut "obtenu"
+  wantedCards = JSON.parse(localStorage.getItem("ptcg-v6") || "[]");
+  obtainedCards = new Set(JSON.parse(localStorage.getItem("ptcg-obtained") || "[]"));
+  renderOverlay();
+};
+
+renderOverlay();
+</script>
+</body>
+</html>
