@@ -21,7 +21,6 @@ body {
   overflow: hidden;
 }
 
-/* --- ZONE DISPLAY (CARTE UNIQUE OBS) --- */
 #display-container {
   display: flex;
   flex-direction: column;
@@ -65,7 +64,6 @@ body {
   display: block;
 }
 
-/* TAMPON "OBTENUE" SUR LE CARROUSEL */
 .card-stamp {
   position: absolute;
   top: 50%;
@@ -85,9 +83,7 @@ body {
   z-index: 10;
 }
 
-.card-slide-item.is-obtained .card-stamp {
-  display: block;
-}
+.card-slide-item.is-obtained .card-stamp { display: block; }
 
 .empty-state {
   width: min(80vw, 320px);
@@ -104,34 +100,36 @@ body {
   padding: 20px;
 }
 
-/* BOUTON DISCRET SOUS LA CARTE */
+/* Style du bouton avec transition de transparence */
 .btn-toggle-panel {
   margin-top: 12px;
-  background: rgba(15, 13, 38, 0.6);
-  border: 1px solid rgba(245, 200, 0, 0.3);
-  color: rgba(255, 255, 255, 0.6);
-  padding: 4px 12px;
+  background: rgba(15, 13, 38, 0.8);
+  border: 1px solid rgba(245, 200, 0, 0.5);
+  color: #fff;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.5s ease;
   backdrop-filter: blur(4px);
+  z-index: 50;
+  opacity: 1;
+}
+
+.btn-toggle-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .btn-toggle-panel:hover {
   background: var(--yellow);
   color: var(--navy);
-  border-color: var(--yellow);
-  opacity: 1;
 }
 
-/* --- PANNEAU DE CONTRÔLE (DRAWER RESPONSIVE) --- */
 #control-drawer {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   height: 85vh;
   background: #0f0d26;
   border-top: 3px solid var(--yellow);
@@ -143,72 +141,27 @@ body {
   z-index: 100;
 }
 
-#control-drawer.open {
-  transform: translateY(0);
-}
+#control-drawer.open { transform: translateY(0); }
 
 .drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--yellow);
-  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--yellow); padding: 10px 16px;
 }
+.drawer-header h2 { font-family: "Bangers", cursive; color: var(--navy); font-size: 18px; }
+.btn-close-drawer { background: var(--navy); color: #fff; border: none; width: 26px; height: 26px; border-radius: 50%; font-weight: 900; cursor: pointer; }
 
-.drawer-header h2 {
-  font-family: "Bangers", cursive;
-  color: var(--navy);
-  font-size: 18px;
-}
-
-.btn-close-drawer {
-  background: var(--navy);
-  color: #fff;
-  border: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.drawer-body {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-}
+.drawer-body { flex: 1; display: flex; flex-direction: row; overflow: hidden; }
 
 @media (max-width: 600px) {
-  .drawer-body {
-    flex-direction: column;
-  }
-  #col-series {
-    width: 100% !important;
-    height: 40%;
-    border-right: none !important;
-    border-bottom: 2px solid rgba(245,200,0,0.2);
-  }
+  .drawer-body { flex-direction: column; }
+  #col-series { width: 100% !important; height: 40%; border-right: none !important; border-bottom: 2px solid rgba(245,200,0,0.2); }
 }
 
-#col-series {
-  width: 240px;
-  border-right: 2px solid rgba(245,200,0,0.2);
-  display: flex;
-  flex-direction: column;
-}
-
+#col-series { width: 240px; border-right: 2px solid rgba(245,200,0,0.2); display: flex; flex-direction: column; }
 .col-head { padding: 8px 12px; border-bottom: 1px solid rgba(245,200,0,0.15); }
 .col-head h3 { font-family: "Bangers", cursive; color: var(--yellow); font-size: 14px; margin-bottom: 4px; }
 .col-head input, .cards-search-wrap input {
-  width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(245,200,0,0.3);
-  border-radius: 6px;
-  color: #fff;
-  padding: 6px 10px;
-  outline: none;
-  font-size: 12px;
+  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(245,200,0,0.3); border-radius: 6px; color: #fff; padding: 6px 10px; outline: none; font-size: 12px;
 }
 
 #series-list { flex: 1; overflow-y: auto; }
@@ -227,32 +180,14 @@ body {
 .gc { cursor: pointer; border-radius: 6px; position: relative; }
 .gc-inner { border-radius: 6px; overflow: hidden; border: 2px solid transparent; aspect-ratio: 63/88; background: #1a1642; position: relative; }
 .gc.selected .gc-inner { border-color: var(--yellow); box-shadow: 0 0 8px rgba(245,200,0,0.6); }
-
 .gc-inner img { width: 100%; height: 100%; object-fit: cover; }
 
 .gc-stamp {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;
 }
-.gc.obtained .gc-stamp {
-  opacity: 1;
-}
-.gc-stamp span {
-  background: #22c55e;
-  color: #fff;
-  font-family: "Bangers", cursive;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transform: rotate(-10deg);
-  border: 1px solid #fff;
-}
+.gc.obtained .gc-stamp { opacity: 1; }
+.gc-stamp span { background: #22c55e; color: #fff; font-family: "Bangers", cursive; font-size: 10px; padding: 2px 6px; border-radius: 4px; transform: rotate(-10deg); border: 1px solid #fff; }
 
 .gc-check { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--yellow); border: 2px solid var(--navy); border-radius: 50%; font-size: 10px; display: none; align-items: center; justify-content: center; color: var(--navy); font-weight: 900; z-index: 5; }
 .gc.selected .gc-check { display: flex; }
@@ -269,7 +204,6 @@ body {
 </head>
 <body>
 
-<!-- AFFICHAGE D'UNE SEULE CARTE (OBS) -->
 <div id="display-container">
   <div class="card-wrapper" id="card-slot">
     <div class="empty-state" id="empty-state-msg">Aucune carte sélectionnée</div>
@@ -277,7 +211,6 @@ body {
   <button class="btn-toggle-panel" id="btn-open-panel">⚙ Panneau de sélection</button>
 </div>
 
-<!-- TIROIR DE SÉLECTION (PANNEAU DE CONTRÔLE) -->
 <div id="control-drawer">
   <div class="drawer-header">
     <h2>SÉLECTION DES CARTES (<span id="hd-count">0</span>)</h2>
@@ -312,18 +245,8 @@ body {
 </div>
 
 <script>
-// URL de base pointant directement sur ton dépôt GitHub Pages
 const IMAGE_BASE_PATH = 'https://pascalipv4.github.io/PokeCardDisplay/images/';
 
-let wantedCards = JSON.parse(localStorage.getItem("ptcg-v6") || "[]");
-let obtainedCards = new Set(localStorage.getItem("ptcg-obtained") ? JSON.parse(localStorage.getItem("ptcg-obtained")) : []);
-let wantedIds = new Set(wantedCards.map(c => c.id));
-
-let allSets = [], currentCards = [], activeSetId = null;
-let currentIndex = 0;
-let carouselInterval = null;
-
-// Génération automatique des 32 images (1.png à 32.png)
 const LOCAL_CUSTOM_32 = Array.from({ length: 32 }, (_, i) => {
   const num = i + 1;
   return {
@@ -334,21 +257,17 @@ const LOCAL_CUSTOM_32 = Array.from({ length: 32 }, (_, i) => {
   };
 });
 
-const LOCAL_CLASSIC_54 = Array.from({ length: 54 }, (_, i) => {
-  const num = i + 1;
-  let filename = (num <= 30) ? `2M6P Classic_FR_${num}.png` : `2M6P_FR_${num}.png`;
-  return {
-    id: `2m6p-fr-${num}`,
-    number: `${num}/54`,
-    name: `Carte #${num}`,
-    img: IMAGE_BASE_PATH + filename,
-    fallback: `https://images.pokemontcg.io/base1/4.png`
-  };
-});
+let storedCards = localStorage.getItem("ptcg-v6");
+let wantedCards = storedCards ? JSON.parse(storedCards) : LOCAL_CUSTOM_32.slice(0, 5);
+let obtainedCards = new Set(localStorage.getItem("ptcg-obtained") ? JSON.parse(localStorage.getItem("ptcg-obtained")) : []);
+let wantedIds = new Set(wantedCards.map(c => c.id));
+
+let allSets = [], currentCards = [], activeSetId = null;
+let currentIndex = 0;
+let carouselInterval = null;
 
 const EXTRA_SETS = [
-  { id: "local_custom_32", name: "Mes Images GitHub (32 Cartes)", series: "Dossier Images", isManual: true, cardsData: LOCAL_CUSTOM_32 },
-  { id: "2m6p_classic_fr", name: "Classic Collection (54 Cartes FR)", series: "30ᵉ Anniversaire", isManual: true, cardsData: LOCAL_CLASSIC_54 }
+  { id: "local_custom_32", name: "Mes Images Locales (32 Cartes)", series: "Dossier Images", isManual: true, cardsData: LOCAL_CUSTOM_32 }
 ];
 
 function initDisplayElements() {
@@ -375,10 +294,6 @@ function initDisplayElements() {
     let img = document.createElement("img");
     img.src = card.img;
     img.className = "single-card";
-    img.onerror = function() {
-      console.warn("Image introuvable :", card.img);
-      this.style.border = "2px dashed red";
-    };
 
     let stamp = document.createElement("div");
     stamp.className = "card-stamp";
@@ -400,7 +315,7 @@ function updateSlidePosition() {
   
   const slideItems = track.querySelectorAll(".card-slide-item");
   slideItems.forEach((item, idx) => {
-    if (obtainedCards.has(wantedCards[idx].id)) {
+    if (wantedCards[idx] && obtainedCards.has(wantedCards[idx].id)) {
       item.classList.add("is-obtained");
     } else {
       item.classList.remove("is-obtained");
@@ -412,7 +327,6 @@ function updateSlidePosition() {
 
 function startCarousel() {
   if (carouselInterval) clearInterval(carouselInterval);
-  
   if (wantedCards.length > 1) {
     carouselInterval = setInterval(() => {
       currentIndex = (currentIndex + 1) % wantedCards.length;
@@ -423,7 +337,7 @@ function startCarousel() {
 
 function renderSingleCard() {
   const countEl = document.getElementById("hd-count");
-  countEl.textContent = wantedCards.length;
+  if (countEl) countEl.textContent = wantedCards.length;
   if (currentIndex >= wantedCards.length) currentIndex = 0;
   initDisplayElements();
 }
@@ -459,8 +373,24 @@ function toggleObtained(id, e) {
 }
 
 const drawer = document.getElementById("control-drawer");
-document.getElementById("btn-open-panel").addEventListener("click", () => drawer.classList.add("open"));
+const btnPanel = document.getElementById("btn-open-panel");
+
+btnPanel.addEventListener("click", () => drawer.classList.add("open"));
 document.getElementById("btn-close-panel").addEventListener("click", () => drawer.classList.remove("open"));
+
+// Disparition automatique du bouton après 3 secondes sans mouvement
+let hideTimeout;
+function showButtonAndResetTimer() {
+  btnPanel.classList.remove("hidden");
+  clearTimeout(hideTimeout);
+  hideTimeout = setTimeout(() => {
+    btnPanel.classList.add("hidden");
+  }, 3000);
+}
+
+window.addEventListener("mousemove", showButtonAndResetTimer);
+window.addEventListener("touchstart", showButtonAndResetTimer);
+showButtonAndResetTimer();
 
 async function loadSets() {
   document.getElementById("series-list").innerHTML = '<div class="grid-state">Chargement…</div>';
@@ -524,8 +454,7 @@ async function loadSetCards(set) {
       number: c.number,
       name: c.name,
       imgSmall: c.img,
-      imgLarge: c.img,
-      imgFallback: c.img
+      imgLarge: c.img
     }));
     renderCardsGrid(currentCards);
     return;
@@ -537,16 +466,13 @@ async function loadSetCards(set) {
 
     currentCards = (data.cards || []).map(c => {
       const num = String(c.localId || c.id);
-      const tcgdexImg = c.image ? `${c.image}/high.webp` : null;
-      const fallbackImg = `https://images.pokemontcg.io/${set.id}/${num}_hires.png`;
-
+      const imgUrl = c.image ? `${c.image}/high.webp` : `https://images.pokemontcg.io/${set.id}/${num}_hires.png`;
       return {
         id: `fr-${set.id}-${num}`,
         number: num,
         name: c.name || `#${num}`,
-        imgSmall: tcgdexImg || fallbackImg,
-        imgLarge: tcgdexImg || fallbackImg,
-        imgFallback: fallbackImg
+        imgSmall: imgUrl,
+        imgLarge: imgUrl
       };
     });
 
@@ -574,8 +500,7 @@ function renderCardsGrid(cards) {
     gc.dataset.id = c.id;
     gc.innerHTML = `
       <div class="gc-inner">
-        <img src="${c.imgSmall}" loading="lazy" alt="${c.name}" 
-             onerror="this.style.opacity='0.2'; console.warn('Erreur image grille:', '${c.imgSmall}');" />
+        <img src="${c.imgSmall}" loading="lazy" alt="${c.name}"/>
         <div class="gc-stamp"><span>OBTENUE</span></div>
       </div>
       <div class="gc-check">✓</div>
@@ -587,7 +512,7 @@ function renderCardsGrid(cards) {
       </div>
     `;
     gc.addEventListener("click", () => {
-      toggleCard({ id: c.id, name: c.name, img: c.imgLarge });
+      toggleCard({ id: c.id, name: c.name, img: c.imgLarge || c.imgSmall });
     });
     grid.appendChild(gc);
   });
